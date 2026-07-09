@@ -1,4 +1,4 @@
-const DASHBOARD_URL = 'https://estreetamc.spurams.com/AppraiserDashboard.aspx';
+const DASHBOARD_URL = 'https://ascribeval.spurams.com/AppraiserDashboard.aspx';
 
 let lastCount = 0;          // detect count CHANGE
 let lastExtractAt = 0;      // safety re-extract timer (catches same-count swaps)
@@ -32,7 +32,7 @@ async function extractNewOrders(dashHtml) {
   const viewStateGen = extractInput(dashHtml, '__VIEWSTATEGENERATOR');
   const eventValid   = extractInput(dashHtml, '__EVENTVALIDATION');
   if (!viewState) {
-    console.warn('[eStreet] no __VIEWSTATE on dashboard');
+    console.warn('[Ascribe] no __VIEWSTATE on dashboard');
     return [];
   }
 
@@ -71,7 +71,7 @@ async function extractNewOrders(dashHtml) {
       if (seen.has(apprId)) continue;
       seen.add(apprId);
       const itemText = cells[3].textContent.replace(/\s+/g, ' ').trim();
-      // full row text = everything in the row (incl address/city/state if eStreet
+      // full row text = everything in the row (incl address/city/state if Ascribe
       // puts it in the grid) — used for the keyword filter
       const rowText = row.textContent.replace(/\s+/g, ' ').trim();
       orders.push({ apprId, itemText, rowText });
@@ -90,11 +90,11 @@ async function extractNewOrders(dashHtml) {
     if (gridRegion) {
       const ids = [...new Set([...gridRegion[0].matchAll(/ApprID=(\d+)/g)].map(m => m[1]))];
       if (ids.length) {
-        console.warn(`[eStreet] grid parse empty — regex fallback found ${ids.length} id(s) in grid region:`, ids);
+        console.warn(`[Ascribe] grid parse empty — regex fallback found ${ids.length} id(s) in grid region:`, ids);
         for (const apprId of ids) orders.push({ apprId, itemText: '', fromFallback: true });
       }
     } else {
-      console.warn('[eStreet] grdNewOrders not in postback response — stale count, no new orders');
+      console.warn('[Ascribe] grdNewOrders not in postback response — stale count, no new orders');
     }
   }
 
@@ -158,7 +158,7 @@ function extensionAlive() {
 
 async function checkOrders() {
   if (!extensionAlive()) {
-    console.warn('[eStreet] extension reloaded — stopping. Refresh page to resume.');
+    console.warn('[Ascribe] extension reloaded — stopping. Refresh page to resume.');
     return;
   }
   try {
@@ -183,7 +183,7 @@ async function checkOrders() {
       heartbeatLog.unshift({ timestamp: lastChecked, count, sessionLost });
       if (heartbeatLog.length > 20) heartbeatLog.length = 20; // ~10 hrs
       await chrome.storage.local.set({ heartbeatLog });
-      console.log(`[eStreet] heartbeat @ ${lastChecked}`);
+      console.log(`[Ascribe] heartbeat @ ${lastChecked}`);
     }
 
     if (sessionLost) {
@@ -192,7 +192,7 @@ async function checkOrders() {
       // doesn't die silently. Throttled to once per 60s.
       if (Date.now() - lastSessionAlarm > 60000) {
         lastSessionAlarm = Date.now();
-        console.warn('[eStreet] count span missing — logged out? Re-login in the tab.');
+        console.warn('[Ascribe] count span missing — logged out? Re-login in the tab.');
         playAlarm();
       }
     } else if (count > 0 && (count !== lastCount || Date.now() - lastExtractAt > 60000)) {
@@ -252,14 +252,14 @@ async function checkOrders() {
     lastCount = count;
   } catch (e) {
     if (e?.message?.includes('Extension context invalidated')) {
-      console.warn('[eStreet] extension reloaded — stopping. Refresh page to resume.');
+      console.warn('[Ascribe] extension reloaded — stopping. Refresh page to resume.');
       return;
     }
     if (e?.message === 'Failed to fetch') {
       // Transient: tab suspended, network blip, or session expired. Skip & retry next tick.
-      console.warn('[eStreet] fetch failed (transient), retrying next tick');
+      console.warn('[Ascribe] fetch failed (transient), retrying next tick');
     } else {
-      console.error('[eStreet] error:', e);
+      console.error('[Ascribe] error:', e);
     }
   }
 

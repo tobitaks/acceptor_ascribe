@@ -1,5 +1,5 @@
-const DASHBOARD_URL = 'https://estreetamc.spurams.com/AppraiserDashboard.aspx';
-const ACCEPT_URL_BASE = 'https://estreetamc.spurams.com/AcceptBroadcastAppraisal.aspx';
+const DASHBOARD_URL = 'https://ascribeval.spurams.com/AppraiserDashboard.aspx';
+const ACCEPT_URL_BASE = 'https://ascribeval.spurams.com/AcceptBroadcastAppraisal.aspx';
 
 const attemptedApprIds = new Set();
 
@@ -70,7 +70,7 @@ async function fetchNewOrdersHtml() {
 
 async function acceptOrder(apprId, itemText = '') {
   if (attemptedApprIds.has(apprId)) {
-    console.log(`[eStreet bg] skip already-attempted ${apprId}`);
+    console.log(`[Ascribe bg] skip already-attempted ${apprId}`);
     return { apprId, skipped: true };
   }
   attemptedApprIds.add(apprId);
@@ -102,7 +102,7 @@ async function acceptOrder(apprId, itemText = '') {
     // Order taken before our GET — accept form not rendered (no btnSubmit).
     // POSTing the shell viewstate anyway lands on Error.aspx ("unexpected error")
     // and got mislabeled 'failed'. Classify correctly + skip the wasted POST.
-    console.log(`[eStreet bg] unavailable ${apprId} (taken before GET)`);
+    console.log(`[Ascribe bg] unavailable ${apprId} (taken before GET)`);
     await logAccepted({
       apprId,
       itemText,
@@ -120,7 +120,7 @@ async function acceptOrder(apprId, itemText = '') {
   if (!viewState) {
     // No viewstate = accept page didn't render (session expired / redirect to login).
     // Log to UI instead of throwing silently so it shows in options Diag.
-    console.warn(`[eStreet bg] no __VIEWSTATE on accept page for ${apprId}`, getDiag);
+    console.warn(`[Ascribe bg] no __VIEWSTATE on accept page for ${apprId}`, getDiag);
     await logAccepted({
       apprId,
       itemText,
@@ -165,9 +165,9 @@ async function acceptOrder(apprId, itemText = '') {
     postSnippet: htmlToText(body).slice(0, 1500)
   };
 
-  console.log(`[eStreet bg] ${outcome} ${apprId} -> status ${res.status}, final url:`, res.url);
+  console.log(`[Ascribe bg] ${outcome} ${apprId} -> status ${res.status}, final url:`, res.url);
   if (outcome !== 'accepted') {
-    console.warn(`[eStreet bg] NON-ACCEPT DIAG ${apprId}:`, diag);
+    console.warn(`[Ascribe bg] NON-ACCEPT DIAG ${apprId}:`, diag);
   }
 
   await logAccepted({
@@ -221,20 +221,20 @@ async function logDetection(entry) {
 
 async function autoAcceptAll() {
   try {
-    console.log('[eStreet bg] fetching new orders table...');
+    console.log('[Ascribe bg] fetching new orders table...');
     const tableHtml = await fetchNewOrdersHtml();
-    console.log('[eStreet bg] response length:', tableHtml.length);
-    console.log('[eStreet bg] response first 1500 chars:', tableHtml.slice(0, 1500));
-    console.log('[eStreet bg] response last 500 chars:', tableHtml.slice(-500));
+    console.log('[Ascribe bg] response length:', tableHtml.length);
+    console.log('[Ascribe bg] response first 1500 chars:', tableHtml.slice(0, 1500));
+    console.log('[Ascribe bg] response last 500 chars:', tableHtml.slice(-500));
     const ids = extractApprIds(tableHtml);
-    console.log('[eStreet bg] ApprIDs found:', ids);
+    console.log('[Ascribe bg] ApprIDs found:', ids);
     for (const id of ids) {
       try { await acceptOrder(id); }
-      catch (e) { console.error(`[eStreet bg] accept ${id} failed:`, e); }
+      catch (e) { console.error(`[Ascribe bg] accept ${id} failed:`, e); }
     }
-    console.log('[eStreet bg] auto-accept run complete');
+    console.log('[Ascribe bg] auto-accept run complete');
   } catch (e) {
-    console.error('[eStreet bg] autoAcceptAll failed:', e);
+    console.error('[Ascribe bg] autoAcceptAll failed:', e);
   }
 }
 
@@ -308,7 +308,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === 'PLAY_AUDIO_ALERT') {
-    console.log('[eStreet bg] play audio alarm');
+    console.log('[Ascribe bg] play audio alarm');
     playAlarm();
   }
 
@@ -339,21 +339,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 });
 
 async function runBatchedAccepts(list, batchSize) {
-  console.log(`[eStreet bg] accepting ${list.length} order(s) in batches of ${batchSize}`);
+  console.log(`[Ascribe bg] accepting ${list.length} order(s) in batches of ${batchSize}`);
   for (let i = 0; i < list.length; i += batchSize) {
     const batch = list.slice(i, i + batchSize);
     const batchNum = Math.floor(i / batchSize) + 1;
-    console.log(`[eStreet bg] batch ${batchNum} firing ${batch.length} parallel`);
+    console.log(`[Ascribe bg] batch ${batchNum} firing ${batch.length} parallel`);
     await Promise.allSettled(
       batch.map(o =>
         acceptOrder(o.apprId, o.itemText).catch(e => {
-          console.error(`[eStreet bg] accept ${o.apprId} failed:`, e);
+          console.error(`[Ascribe bg] accept ${o.apprId} failed:`, e);
           throw e;
         })
       )
     );
   }
-  console.log('[eStreet bg] all batches complete');
+  console.log('[Ascribe bg] all batches complete');
 }
 
 // If user manually closes the monitored tab, reset state

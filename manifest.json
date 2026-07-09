@@ -1,13 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "eStreet New Order Alarm",
+  "name": "Ascribe New Order Alarm",
   "version": "1.0",
-  "description": "Alerts when new orders appear on eStreet Appraisal dashboard",
+  "description": "Alerts when new orders appear on Ascribe Appraisal dashboard",
   "permissions": ["notifications", "storage", "tabs", "offscreen", "scripting"],
-  "host_permissions": ["https://estreetamc.spurams.com/*"],
+  "host_permissions": ["https://ascribeval.spurams.com/*"],
   "content_scripts": [
     {
-      "matches": ["https://estreetamc.spurams.com/AppraiserDashboard.aspx*"],
+      "matches": ["https://ascribeval.spurams.com/AppraiserDashboard.aspx*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }

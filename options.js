@@ -102,7 +102,7 @@ function render(entries) {
     };
     const status = statusMap[outcome] || statusMap.failed;
     const itemText = e.itemText || '—';
-    const apprUrl = `https://estreetamc.spurams.com/ViewOrder.aspx?ApprID=${e.apprId}`;
+    const apprUrl = `https://ascribeval.spurams.com/ViewOrder.aspx?ApprID=${e.apprId}`;
     const address = e.address || '—';
     return `
       <tr>

@@ -17,6 +17,6 @@ chrome.runtime.onMessage.addListener((msg) => {
       osc.stop(start + 0.2);
     }
   } catch (e) {
-    console.error('[eStreet offscreen] audio error:', e);
+    console.error('[Ascribe offscreen] audio error:', e);
   }
 });
